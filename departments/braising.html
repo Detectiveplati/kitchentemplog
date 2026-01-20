@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Deep Fry Kitchen Log - Multi Cook</title>
+  <title>Braising Kitchen Log - Multi Cook</title>
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
 
-  <h1>Deep Fry Kitchen Log</h1>
+  <h1>Braising Kitchen Log</h1>
 
   <div id="staff-selector">
     <strong>Current Staff / Chef:</strong>
@@ -25,14 +25,14 @@
   <div id="menu">
     <h2>Select Food to Start Cooking</h2>
     <div class="food-grid">
-      <div class="food-card" onclick="addNewCook('Deep Fried Spring Roll')">
-        <span>春卷Deep Fried Spring Roll</span>
+      <div class="food-card" onclick="addNewCook('Braised Beef')">
+        <span>炖牛肉Braised Beef</span>
       </div>
-      <div class="food-card" onclick="addNewCook('Deep Fried Chicken')">
-        <span>炸鸡Deep Fried Chicken</span>
+      <div class="food-card" onclick="addNewCook('Braised Pork')">
+        <span>炖猪肉Braised Pork</span>
       </div>
-      <div class="food-card" onclick="addNewCook('Deep Fried Fish')">
-        <span>炸鱼Deep Fried Fish</span>
+      <div class="food-card" onclick="addNewCook('Braised Vegetables')">
+        <span>炖蔬菜Braised Vegetables</span>
       </div>
     </div>
   </div>
@@ -65,8 +65,8 @@
   <script src="../data.js"></script>
   <script src="../app.js"></script>
   <script>
-    // Initialize data layer for Deep Fry CSV
-    initializeData('deepfry.csv');
+    // Initialize data layer for Braising CSV
+    initializeData('braising.csv');
   </script>
 </body>
 </html>

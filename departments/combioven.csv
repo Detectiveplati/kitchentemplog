@@ -1,0 +1,5 @@
+Food Item,Start Date,Start Time,End Date,End Time,Duration (min),Core Temp (°C),Staff,Trays
+"Roasted Vegetables",2026-01-20,07:37:25,2026-01-20,07:37:26,0.0,88,Alice,5
+"Roasted Vegetables",2026-01-20,07:37:59,2026-01-20,07:38:00,0.0,77,Bob,7
+"Roasted Vegetables",2026-01-20,07:38:16,2026-01-20,07:38:16,0.0,88,Bob,8
+"Deep Fried Spring Roll",2026-01-20,07:39:11,2026-01-20,07:39:12,0.0,88,Alice,8
