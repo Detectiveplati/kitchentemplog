@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deep Fry Kitchen Log - Multi Cook</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <h1>Deep Fry Kitchen Log</h1>
+
+  <div id="staff-selector">
+    <strong>Current Staff / Chef:</strong>
+    <button class="staff-btn" id="staff-Alice" onclick="setGlobalStaff('Alice')">Alice</button>
+    <button class="staff-btn" id="staff-Bob" onclick="setGlobalStaff('Bob')">Bob</button>
+    <button class="staff-btn" id="staff-Charlie" onclick="setGlobalStaff('Charlie')">Charlie</button>
+  </div>
+
+  <div id="active-cooks">
+    <h2>Active / Running Cooks</h2>
+    <div class="active-grid" id="active-grid"></div>
+  </div>
+
+  <div id="menu">
+    <h2>Select Food to Start Cooking</h2>
+    <div class="food-grid">
+      <div class="food-card" onclick="addNewCook('Deep Fried Spring Roll')">
+        <img src="https://img.freepik.com/premium-vector/delicious-spring-rolls-chinese-food-icon-vector-illustration_1394023-9322.jpg" alt="Spring Roll">
+        <span>春卷Deep Fried Spring Roll</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('Deep Fried Chicken')">
+        <img src="https://www.shutterstock.com/image-vector/set-simple-flat-fried-chicken-600nw-2460783193.jpg" alt="Chicken">
+        <span>炸鸡Deep Fried Chicken</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('Deep Fried Fish')">
+        <img src="https://static.vecteezy.com/system/resources/previews/018/839/942/non_2x/fried-chicken-icon-illustration-icon-related-to-breakfast-line-icon-style-simple-design-editable-vector.jpg" alt="Fish" style="transform: rotate(90deg);">
+        <span>炸鱼Deep Fried Fish</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <div id="log">
+    <h3>Recent Entries (last 8)</h3>
+    <table id="recent-table">
+      <thead>
+        <tr>
+          <th class="food-col">Food Item</th>
+          <th class="date-col">Start Date</th>
+          <th class="time-col">Start Time</th>
+          <th class="date-col">End Date</th>
+          <th class="time-col">End Time</th>
+          <th class="small-col">Duration (min)</th>
+          <th class="small-col">Core Temp (°C)</th>
+          <th class="small-col">Staff</th>
+          <th class="small-col">Trays</th>
+        </tr>
+      </thead>
+      <tbody id="recent-body"></tbody>
+    </table>
+
+    <button
+      onclick="exportFullCSV()"
+      class="download-btn"
+    >
+      Download Full CSV
+    </button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
