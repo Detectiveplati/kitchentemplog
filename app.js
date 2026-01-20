@@ -1,4 +1,6 @@
-let fileHandle = null;
+// ============================================================
+// UI STATE & ELEMENTS
+// ============================================================
 let cooks = [];
 let globalTimerId = null;
 let currentStaff = null;  // 'Alice', 'Bob', 'Charlie' or null
@@ -12,30 +14,24 @@ function setGlobalStaff(staff) {
   document.querySelectorAll('.staff-btn').forEach(btn => {
     btn.classList.remove('staff-selected');
   });
-  document.getElementById(`staff-${staff}`).classList.add('staff-selected');
+  document.getElementById(`staff-${staff.replace(/\s+/g, '')}`).classList.add('staff-selected');
   statusEl.textContent = `Current staff set to: ${staff}`;
 }
 
-async function getOrCreateCSVFile() {
-  if (fileHandle) return fileHandle;
-  try {
-    [fileHandle] = await window.showOpenFilePicker({
-      types: [{ description: 'CSV Files', accept: {'text/csv': ['.csv']} }]
-    });
-  } catch {
-    fileHandle = await window.showSaveFilePicker({
-      suggestedName: 'deep_fry_cooking_log.csv',
-      types: [{ description: 'CSV File', accept: {'text/csv': ['.csv']} }]
-    });
-    const w = await fileHandle.createWritable();
-    await w.write(
-      "Food Item,Start Date,Start Time,End Date,End Time,Duration (min),Core Temp (°C),Staff,Trays\n"
-    );
-    await w.close();
+// Auto-select the first staff member on page load
+function autoSelectFirstStaff() {
+  const firstStaffBtn = document.querySelector('.staff-btn');
+  if (firstStaffBtn) {
+    const staffName = firstStaffBtn.textContent.trim();
+    // Extract the chef name from the button
+    const staffValue = firstStaffBtn.getAttribute('onclick').match(/'([^']+)'/)[1];
+    setGlobalStaff(staffValue);
   }
-  await loadRecent();
-  return fileHandle;
 }
+
+// ============================================================
+// COOK MANAGEMENT (no data layer calls here - UI only)
+// ============================================================
 
 function addNewCook(food) {
   if (!currentStaff) {
@@ -55,7 +51,7 @@ function addNewCook(food) {
     timerRunning: false
   });
   renderActiveCooks();
-  statusEl.textContent = `Added ${food} by ${currentStaff} — press Start when ready.`;
+  statusEl.textContent = `已添加 Added ${food} by ${currentStaff} — 按开始做好准备 press Start when ready.`;
 }
 
 function renderActiveCooks() {
@@ -66,29 +62,29 @@ function renderActiveCooks() {
     card.innerHTML = `
       <h3>${cook.food}</h3>
       <div class="timer-display ${cook.endTime ? 'finished' : ''}" id="timer-${cook.id}">
-        ${cook.startTime ? formatElapsed(cook) : 'Not started'}
+        ${cook.startTime ? formatElapsed(cook) : '未开始 Not started'}
       </div>
       <div class="info-row">
-        <strong>Staff:</strong> ${currentStaff || '(not set)'}
+        <strong>厨师 Staff:</strong> ${currentStaff || '(not set)'}
       </div>
-      ${!cook.startTime ? `<button class="start-btn" onclick="startCook(${cook.id})">START COOKING</button>` : ''}
-      ${cook.startTime && !cook.endTime ? `<button class="end-btn" onclick="endCook(${cook.id})">END COOKING</button>` : ''}
+      ${!cook.startTime ? `<button class="start-btn" onclick="startCook(${cook.id})">开始烹饪 START COOKING</button>` : ''}
+      ${cook.startTime && !cook.endTime ? `<button class="end-btn" onclick="endCook(${cook.id})">停止烹饪 END COOKING</button>` : ''}
       ${cook.endTime ? `
         <div class="info-row">
-          <input type="number" step="0.1" min="0" max="150" placeholder="Core °C" value="${cook.temp}" onchange="updateTemp(${cook.id}, this.value)">
-          <input type="number" min="1" step="1" placeholder="Trays" value="${cook.trays}" onchange="updateTrays(${cook.id}, this.value)">
-          <button class="save-btn" onclick="saveCook(${cook.id})">SAVE</button>
+          <input type="number" step="0.1" min="0" max="150" placeholder="核心温度 °C" value="${cook.temp}" onchange="updateTemp(${cook.id}, this.value)">
+          <input type="number" min="1" step="1" placeholder="盘子" value="${cook.trays}" onchange="updateTrays(${cook.id}, this.value)">
+          <button class="save-btn" onclick="saveCook(${cook.id})">保存 SAVE</button>
         </div>
       ` : ''}
-      <button class="back-btn" onclick="removeCook(${cook.id})">Cancel / Remove</button>
+      ${!cook.startTime || cook.endTime ? `<button class="back-btn" onclick="removeCook(${cook.id})">取消/删除 Cancel / Remove</button>` : ''}
     `;
     activeGrid.appendChild(card);
   });
 }
 
 function formatElapsed(cook) {
-  if (!cook.startTime) return '00:00';
-  if (cook.endTime) return `${cook.duration} min`;
+  if (!cook.startTime) return '未开始 Not started';
+  if (cook.endTime) return `${cook.duration} 分钟 min`;
   const sec = Math.floor((Date.now() - cook.startTime) / 1000);
   const m = String(Math.floor(sec / 60)).padStart(2,'0');
   const s = String(sec % 60).padStart(2,'0');
@@ -149,26 +145,26 @@ async function saveCook(id) {
   const endDate   = end.toISOString().split('T')[0];
   const endTime   = end.toISOString().split('T')[1].slice(0, 8);
 
-  const row = [
-    `"${cook.food.replace(/"/g, '""')}"`,
-    startDate,
-    startTime,
-    endDate,
-    endTime,
-    cook.duration,
-    cook.temp,
-    currentStaff,
-    cook.trays
-  ].join(',');
+  // Call the data layer instead of directly writing CSV
+  try {
+    await saveCookData({
+      food: cook.food,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      duration: cook.duration,
+      temp: cook.temp,
+      staff: currentStaff,
+      trays: cook.trays
+    });
 
-  const file = await getOrCreateCSVFile();
-  if (file) {
-    const writable = await file.createWritable({ keepExistingData: true });
-    await writable.seek((await file.getFile()).size);
-    await writable.write(row + '\n');
-    await writable.close();
     await loadRecent();
-    statusEl.textContent = `${cook.food} (${cook.trays} trays) saved ✓`;
+    statusEl.textContent = `${cook.food} (${cook.trays} 盘子 trays) 保存 saved ✓`;
+  } catch (err) {
+    console.error("Error saving cook data:", err);
+    alert("保存失败 Failed to save cook data. 请重试 Please try again.");
+    return;
   }
 
   removeCook(id);
@@ -207,62 +203,46 @@ function checkAllTimers() {
 }
 
 async function loadRecent() {
-  if (!fileHandle) return;
   try {
-    const file = await fileHandle.getFile();
-    const text = await file.text();
-    const lines = text.trim().split('\n').slice(1).reverse().slice(0, 8);
+    const entries = await loadRecentCookData();
 
     recentBody.innerHTML = '';
-    lines.forEach(line => {
-      if (!line.trim()) return;
-      const parts = line.split(',');
-      if (parts.length < 9) return;
-
-      const food   = parts[0].replace(/^"|"$/g, '').replace(/""/g, '"').trim();
-      const sDate  = parts[1] || '';
-      const sTime  = parts[2] || '';
-      const eDate  = parts[3] || '';
-      const eTime  = parts[4] || '';
-      const dur    = parts[5] || '';
-      const temp   = parts[6] || '';
-      const staff  = parts[7] || '';
-      const trays  = parts[8] || '';
-
+    entries.forEach(entry => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td class="food-col">${food}</td>
-        <td>${sDate}</td>
-        <td>${sTime}</td>
-        <td>${eDate}</td>
-        <td>${eTime}</td>
-        <td class="small-col">${dur}</td>
-        <td class="small-col">${temp}</td>
-        <td class="small-col">${staff}</td>
-        <td class="small-col">${trays}</td>
+        <td class="food-col">${entry.food}</td>
+        <td>${entry.startDate}</td>
+        <td>${entry.startTime}</td>
+        <td>${entry.endDate}</td>
+        <td>${entry.endTime}</td>
+        <td class="small-col">${entry.duration}</td>
+        <td class="small-col">${entry.temp}</td>
+        <td class="small-col">${entry.staff}</td>
+        <td class="small-col">${entry.trays}</td>
       `;
       recentBody.appendChild(row);
     });
   } catch (err) {
-    console.error("Error loading recent:", err);
+    console.error("Error loading recent data:", err);
   }
 }
 
 async function exportFullCSV() {
-  if (fileHandle) {
-    const file = await fileHandle.getFile();
-    const text = await file.text();
-    const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+  try {
+    const blob = await exportFullCSVData();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'deep_fry_cooking_log.csv';
     a.click();
     URL.revokeObjectURL(url);
-  } else {
-    alert("No log file selected yet.");
+  } catch (err) {
+    console.error("Export error:", err);
+    alert(err.message || "Failed to export CSV");
   }
 }
 
-// Initialize
-getOrCreateCSVFile();
+// ============================================================
+// INITIALIZATION
+// ============================================================
+// initializeData() is called from HTML with the appropriate CSV filename
