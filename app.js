@@ -71,8 +71,8 @@ function renderActiveCooks() {
       ${cook.startTime && !cook.endTime ? `<button class="end-btn" onclick="endCook(${cook.id})">停止烹饪 END COOKING</button>` : ''}
       ${cook.endTime ? `
         <div class="info-row">
-          <input type="number" step="0.1" min="0" max="150" placeholder="核心温度 °C" value="${cook.temp}" onchange="updateTemp(${cook.id}, this.value)">
-          <input type="number" min="1" step="1" placeholder="盘子" value="${cook.trays}" onchange="updateTrays(${cook.id}, this.value)">
+          <input type="number" step="0.1" min="0" max="150" inputmode="decimal" placeholder="核心温度 °C" value="${cook.temp}" oninput="sanitizeNumberInput(this, true)" onchange="updateTemp(${cook.id}, this.value)">
+          <input type="number" min="1" step="1" inputmode="numeric" placeholder="盘子" value="${cook.trays}" oninput="sanitizeNumberInput(this, false)" onchange="updateTrays(${cook.id}, this.value)">
           <button class="save-btn" onclick="saveCook(${cook.id})">保存 SAVE</button>
         </div>
       ` : ''}
@@ -120,6 +120,22 @@ function updateTemp(id, value) {
 function updateTrays(id, value) {
   const cook = cooks.find(c => c.id === id);
   if (cook) cook.trays = value.trim();
+}
+
+function sanitizeNumberInput(inputEl, allowDecimal) {
+  let value = inputEl.value;
+  if (allowDecimal) {
+    value = value.replace(/[^0-9.]/g, '');
+    const firstDot = value.indexOf('.');
+    if (firstDot !== -1) {
+      value = value.slice(0, firstDot + 1) + value.slice(firstDot + 1).replace(/\./g, '');
+    }
+  } else {
+    value = value.replace(/\D/g, '');
+  }
+  if (inputEl.value !== value) {
+    inputEl.value = value;
+  }
 }
 
 async function saveCook(id) {
