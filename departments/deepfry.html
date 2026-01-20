@@ -2,36 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
   <title>Deep Fry Kitchen Log - Multi Cook</title>
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
 
-  <h1>Deep Fry Kitchen Log</h1>
+  <h1>油炸部门 Deep Fry Kitchen Log</h1>
 
   <div id="staff-selector">
-    <strong>Current Staff / Chef:</strong>
+    <strong>厨师名字 Chef Name</strong>
     <button class="staff-btn" id="staff-Alice" onclick="setGlobalStaff('Alice')">Alice</button>
     <button class="staff-btn" id="staff-Bob" onclick="setGlobalStaff('Bob')">Bob</button>
     <button class="staff-btn" id="staff-Charlie" onclick="setGlobalStaff('Charlie')">Charlie</button>
   </div>
 
   <div id="active-cooks">
-    <h2>Active / Running Cooks</h2>
+    <h2>现煮的食品 Active / Running Cooks</h2>
     <div class="active-grid" id="active-grid"></div>
   </div>
 
   <div id="menu">
-    <h2>Select Food to Start Cooking</h2>
+    <h2>选择要开始烹饪的食物 Select Food to Start Cooking</h2>
     <div class="food-grid">
-      <div class="food-card" onclick="addNewCook('Deep Fried Spring Roll')">
+      <div class="food-card" onclick="addNewCook('春卷Deep Fried Spring Roll')">
         <span>春卷Deep Fried Spring Roll</span>
       </div>
-      <div class="food-card" onclick="addNewCook('Deep Fried Chicken')">
+      <div class="food-card" onclick="addNewCook('炸鸡Deep Fried Chicken')">
         <span>炸鸡Deep Fried Chicken</span>
       </div>
-      <div class="food-card" onclick="addNewCook('Deep Fried Fish')">
+      <div class="food-card" onclick="addNewCook('炸鱼Deep Fried Fish')">
         <span>炸鱼Deep Fried Fish</span>
       </div>
     </div>
@@ -67,6 +67,8 @@
   <script>
     // Initialize data layer for Deep Fry CSV
     initializeData('deepfry.csv');
+    // Auto-select first staff member
+    autoSelectFirstStaff();
   </script>
 </body>
 </html>

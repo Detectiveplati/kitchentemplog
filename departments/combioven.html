@@ -2,37 +2,77 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
   <title>Combi Oven Kitchen Log - Multi Cook</title>
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
 
-  <h1>Combi Oven Kitchen Log</h1>
+  <h1>组合烤箱部门 Combi Oven Kitchen Log</h1>
 
   <div id="staff-selector">
-    <strong>Current Staff / Chef:</strong>
-    <button class="staff-btn" id="staff-Alice" onclick="setGlobalStaff('Alice')">Alice</button>
-    <button class="staff-btn" id="staff-Bob" onclick="setGlobalStaff('Bob')">Bob</button>
-    <button class="staff-btn" id="staff-Charlie" onclick="setGlobalStaff('Charlie')">Charlie</button>
+    <strong>厨师名字 Chef Name</strong>
+    <button class="staff-btn" id="staff-AhDong" onclick="setGlobalStaff('Ah Dong')">啊东Ah Dong</button>
   </div>
 
   <div id="active-cooks">
-    <h2>Active / Running Cooks</h2>
+    <h2>现煮的食品 Active / Running Cooks</h2>
     <div class="active-grid" id="active-grid"></div>
   </div>
 
   <div id="menu">
-    <h2>Select Food to Start Cooking</h2>
+    <h2>选择要开始烹饪的食物 Select Food to Start Cooking</h2>
     <div class="food-grid">
-      <div class="food-card" onclick="addNewCook('Roasted Vegetables')">
-        <span>蔬菜Roasted Vegetables</span>
+      <div class="food-card" onclick="addNewCook('烤蜜汁鸡翅膀Grilled Honey Chicken Wings')">
+        <span>烤蜜汁鸡翅膀Grilled Honey Chicken Wings</span>
       </div>
-      <div class="food-card" onclick="addNewCook('Baked Chicken')">
-        <span>烤鸡Baked Chicken</span>
+      <div class="food-card" onclick="addNewCook('泰式香兰叶鸡Roasted Chicken W Pandan Asian Spices')">
+        <span>泰式香兰叶鸡Roasted Chicken W Pandan Asian Spices</span>
       </div>
-      <div class="food-card" onclick="addNewCook('Steamed Fish')">
-        <span>蒸鱼Steamed Fish</span>
+      <div class="food-card" onclick="addNewCook('蜜汁鸡Honey Glazed Chicken')">
+        <span>蜜汁鸡Honey Glazed Chicken</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤日式鸡Grilled Teriyaki Chicken')">
+        <span>烤日式鸡Grilled Teriyaki Chicken</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('鸡肉卷,牛油挞子酱Chicken Roulade with Butter Berry Raisin Sauce')">
+        <span>鸡肉卷,牛油挞子酱Chicken Roulade with Butter Berry Raisin Sauce</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤无骨鸡肉与BBQ酱和黄梨番茄莎莎Grilled Chicken w Pineapple Salsa')">
+        <span>烤无骨鸡肉与BBQ酱和黄梨番茄莎莎Grilled Chicken w Pineapple Salsa</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('鸡肉沙爹(大)Jumbo Chicken Satay')">
+        <span>鸡肉沙爹(大)Jumbo Chicken Satay</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤印第安鸡与小番茄Grilled Cajun Chicken Breast')">
+        <span>烤印第安鸡与小番茄Grilled Cajun Chicken Breast</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤鸡Ayam Panggang')">
+        <span>烤鸡Ayam Panggang</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('香兰叶烤鸡Grilled Pandan Chicken')">
+        <span>香兰叶烤鸡Grilled Pandan Chicken</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤卡津蒜鸡翅Grilled Cajun Garlic Winglet')">
+        <span>烤卡津蒜鸡翅Grilled Cajun Garlic Winglet</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤蜜汁鸡翅Grilled Honey Chicken Winglet')">
+        <span>烤蜜汁鸡翅Grilled Honey Chicken Winglet</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤BBQ酱鸡翅BBQ Sauce Grilled Chicken Winglet')">
+        <span>烤BBQ酱鸡翅BBQ Sauce Grilled Chicken Winglet</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤无骨鸡肉与BBQ酱和黄梨番茄莎莎Grilled Boneless Chicken w BBQ Sauce topped w Pineapple Salsa')">
+        <span>烤无骨鸡肉与BBQ酱和黄梨番茄莎莎Grilled Boneless Chicken w BBQ Sauce topped w Pineapple Salsa</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤黑椒鸡Grilled Black Pepper Chicken')">
+        <span>烤黑椒鸡Grilled Black Pepper Chicken</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤黑椒鸡翅Grilled Black Pepper Chicken Winglet')">
+        <span>烤黑椒鸡翅Grilled Black Pepper Chicken Winglet</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤鱼片与厨师三巴酱Grilled Fish Fillet w Chef Sambal')">
+        <span>烤鱼片与厨师三巴酱Grilled Fish Fillet w Chef Sambal</span>
       </div>
     </div>
   </div>
@@ -67,6 +107,8 @@
   <script>
     // Initialize data layer for Combi Oven CSV
     initializeData('combioven.csv');
+    // Auto-select first staff member
+    autoSelectFirstStaff();
   </script>
 </body>
 </html>
