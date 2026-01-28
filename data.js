@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // DATA LAYER - Handles all persistence (CSV, Database, API)
 // This abstraction allows easy migration from CSV to MongoDB
 // ============================================================
@@ -109,86 +109,15 @@ function openIndexedDB() {
 
 // Save cook data to CSV (currently) or API (future MongoDB)
 async function saveCookData(cookData) {
-  // Currently using CSV
-  // TODO: When migrating to MongoDB, change to:
-  // return fetch('/api/cooks', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(cookData)
-  // }).then(res => res.json());
+  const res = await fetch('/api/cooks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cookData)
+  });
 
-  const row = [
-    `"${cookData.food.replace(/"/g, '""')}"`,
-    cookData.startDate,
-    cookData.startTime,
-    cookData.endDate,
-    cookData.endTime,
-    cookData.duration,
-    cookData.temp,
-    cookData.staff,
-    cookData.trays
-  ].join(',');
-
-  const file = await getOrCreateCSVFile();
-  if (file) {
-    const writable = await file.createWritable({ keepExistingData: true });
-    await writable.seek((await file.getFile()).size);
-    await writable.write(row + '\n');
-    await writable.close();
+  if (!res.ok) {
+    throw new Error('Failed to save cook data');
   }
 
   return true;
-}
-
-// Load recent cook entries
-async function loadRecentCookData() {
-  // Currently using CSV
-  // TODO: When migrating to MongoDB, change to:
-  // return fetch('/api/cooks?limit=8&sort=desc')
-  //   .then(res => res.json());
-
-  if (!fileHandle) return [];
-
-  try {
-    const file = await fileHandle.getFile();
-    const text = await file.text();
-    const lines = text.trim().split('\n').slice(1).reverse().slice(0, 8);
-
-    return lines
-      .filter(line => line.trim())
-      .map(line => {
-        const parts = line.split(',');
-        if (parts.length < 9) return null;
-
-        return {
-          food: parts[0].replace(/^"|"$/g, '').replace(/""/g, '"').trim(),
-          startDate: parts[1] || '',
-          startTime: parts[2] || '',
-          endDate: parts[3] || '',
-          endTime: parts[4] || '',
-          duration: parts[5] || '',
-          temp: parts[6] || '',
-          staff: parts[7] || '',
-          trays: parts[8] || ''
-        };
-      })
-      .filter(item => item !== null);
-  } catch (err) {
-    console.error("Error loading recent data:", err);
-    return [];
-  }
-}
-
-// Export full CSV (keep this for CSV mode)
-async function exportFullCSVData() {
-  // TODO: When using MongoDB, you might want to export via API
-  // return fetch('/api/cooks/export').then(res => res.blob());
-
-  if (fileHandle) {
-    const file = await fileHandle.getFile();
-    const text = await file.text();
-    return new Blob([text], { type: 'text/csv;charset=utf-8;' });
-  } else {
-    throw new Error("No log file selected yet.");
-  }
 }
