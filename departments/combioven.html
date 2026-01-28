@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -13,6 +13,8 @@
   <div id="staff-selector">
     <strong>厨师名字 Chef Name</strong>
     <button class="staff-btn" id="staff-AhDong" onclick="setGlobalStaff('Ah Dong')">啊东Ah Dong</button>
+    <button class="staff-btn" id="staff-HuaYun" onclick="setGlobalStaff('Hua Yun')">华云Hua Yun</button>
+    <button class="staff-btn" id="staff-Selva" onclick="setGlobalStaff('Selva')">Selva</button>
   </div>
 
   <div id="active-cooks">
@@ -105,10 +107,12 @@
   <script src="../data.js"></script>
   <script src="../app.js"></script>
   <script>
-    // Initialize data layer for Combi Oven CSV
-    initializeData('combioven.csv');
+    // CSV init removed (MongoDB API only)
     // Auto-select first staff member
     autoSelectFirstStaff();
+    // Load recent entries on page load
+    loadRecent();
   </script>
 </body>
 </html>
+

@@ -1,6 +1,12 @@
 ﻿const express = require('express');
 const { MongoClient } = require('mongodb');
 const path = require('path');
+let puppeteer = null;
+try {
+  puppeteer = require('puppeteer');
+} catch (err) {
+  // PDF export will be unavailable until puppeteer is installed.
+}
 
 const app = express();
 const PORT = 3000;
@@ -43,6 +49,15 @@ function validateCook(cook) {
   if (cook.trays !== undefined && cook.trays !== '' && (isNaN(traysNum) || traysNum < 1)) return 'Invalid trays';
   return null;
 }
+
+function buildMonthFilter(query) {
+  const { year, month } = query;
+  if (year && month) {
+    const ym = `${year}-${String(month).padStart(2, '0')}`;
+    return { startDate: new RegExp(`^${ym}-`) };
+  }
+  return {};
+}
 // Save cook data
 app.post('/api/cooks', requireDb, async (req, res) => {
   try {
@@ -66,8 +81,9 @@ app.post('/api/cooks', requireDb, async (req, res) => {
 app.get('/api/cooks', requireDb, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit || '8', 10);
+    const filter = buildMonthFilter(req.query);
     const cooks = await db.collection('cooks')
-      .find({})
+      .find(filter)
       .sort({ createdAt: -1 })
       .limit(limit)
       .toArray();
@@ -82,7 +98,9 @@ app.get('/api/cooks', requireDb, async (req, res) => {
 // Export full CSV
 app.get('/api/cooks/export', requireDb, async (req, res) => {
   try {
-    const cooks = await db.collection('cooks').find({}).sort({ createdAt: 1 }).toArray();
+    const { year, month } = req.query;
+    const filter = buildMonthFilter(req.query);
+    const cooks = await db.collection('cooks').find(filter).sort({ createdAt: 1 }).toArray();
 
     const headers = [
       'Food Item','Start Date','Start Time','End Date','End Time',
@@ -100,11 +118,66 @@ app.get('/api/cooks/export', requireDb, async (req, res) => {
 
     const bom = '\ufeff';
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="kitchenlog.csv"');
+    let suffix = 'all';
+    if (year && month) {
+      const monthNames = [
+        'January','February','March','April','May','June',
+        'July','August','September','October','November','December'
+      ];
+      const monthIndex = Math.max(1, Math.min(12, parseInt(month, 10))) - 1;
+      suffix = `${monthNames[monthIndex]}-${year}`;
+    }
+    res.setHeader('Content-Disposition', `attachment; filename="kitchenlog-${suffix}.csv"`);
     res.send(bom + csv);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Export PDF report (HTML -> PDF)
+app.get('/api/cooks/report.pdf', requireDb, async (req, res) => {
+  try {
+    if (!puppeteer) {
+      return res.status(500).json({ error: 'PDF export requires puppeteer. Install it with: npm install puppeteer' });
+    }
+
+    const { year, month } = req.query;
+    const qs = [];
+    if (year && month) {
+      qs.push(`year=${encodeURIComponent(year)}`, `month=${encodeURIComponent(month)}`);
+    }
+    qs.push('print=1');
+    const queryString = qs.length ? `?${qs.join('&')}` : '';
+    const url = `http://localhost:${PORT}/departments/combioven-report.html${queryString}`;
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'networkidle0' });
+    await page.waitForFunction('window.__reportReady === true');
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true
+    });
+
+    await browser.close();
+
+    let suffix = 'all';
+    if (year && month) {
+      const monthNames = [
+        'January','February','March','April','May','June',
+        'July','August','September','October','November','December'
+      ];
+      const monthIndex = Math.max(1, Math.min(12, parseInt(month, 10))) - 1;
+      suffix = `${monthNames[monthIndex]}-${year}`;
+    }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="kitchenlog-${suffix}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'PDF export failed' });
   }
 });
 

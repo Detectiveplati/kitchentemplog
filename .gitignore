@@ -10,3 +10,6 @@ Thumbs.db
 
 # Local CSV logs (generated data)
 departments/*.csv
+
+# Exported reports (generated files)
+*.pdf

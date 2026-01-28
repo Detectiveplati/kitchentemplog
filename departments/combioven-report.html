@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
+  <title>Combi Oven Report</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .report-controls {
+      margin: 10px 0;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .print-only {
+      display: none;
+    }
+    body.print .report-controls,
+    body.print .no-print {
+      display: none;
+    }
+    body.print .print-only {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>组合烤箱报表 Combi Oven Report</h1>
+
+  <div id="status" class="no-print"></div>
+
+  <div class="report-controls no-print">
+    <label for="month-input">Month:</label>
+    <input id="month-input" type="month" />
+    <button id="load-btn" class="export-btn">Load</button>
+    <button id="pdf-btn" class="export-btn">Download PDF</button>
+    <a class="export-btn" href="../index.html">Back</a>
+  </div>
+
+  <div class="print-only">
+    <p id="report-period"></p>
+  </div>
+
+  <div id="log">
+    <table id="recent-table">
+      <thead>
+        <tr>
+          <th class="food-col">Food Item</th>
+          <th class="date-col">Start Date</th>
+          <th class="time-col">Start Time</th>
+          <th class="date-col">End Date</th>
+          <th class="time-col">End Time</th>
+          <th class="small-col">Duration (min)</th>
+          <th class="small-col">Core Temp (°C)</th>
+          <th class="small-col">Staff</th>
+          <th class="small-col">Trays</th>
+        </tr>
+      </thead>
+      <tbody id="recent-body"></tbody>
+    </table>
+  </div>
+
+  <script>
+    window.__reportReady = false;
+
+    function getQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        year: params.get('year'),
+        month: params.get('month'),
+        print: params.get('print') === '1'
+      };
+    }
+
+    function setPrintMode(isPrint) {
+      document.body.classList.toggle('print', isPrint);
+    }
+
+    async function loadReport() {
+      const statusEl = document.getElementById('status');
+      const body = document.getElementById('recent-body');
+      const periodEl = document.getElementById('report-period');
+      const { year, month, print } = getQueryParams();
+
+      const qs = [];
+      if (year && month) {
+        qs.push(`year=${encodeURIComponent(year)}`, `month=${encodeURIComponent(month)}`);
+      }
+      qs.push('limit=1000');
+      const url = `/api/cooks?${qs.join('&')}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Failed to load data');
+        const entries = await res.json();
+
+        body.innerHTML = '';
+        if (!entries.length) {
+          body.innerHTML = '<tr><td colspan="9">No entries found</td></tr>';
+          statusEl.textContent = 'No data yet.';
+          periodEl.textContent = year && month ? `Report period: ${year}-${month}` : 'Report period: All';
+          window.__reportReady = true;
+          return;
+        }
+
+        entries.forEach(entry => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="food-col">${entry.food || ''}</td>
+            <td>${entry.startDate || ''}</td>
+            <td>${entry.startTime || ''}</td>
+            <td>${entry.endDate || ''}</td>
+            <td>${entry.endTime || ''}</td>
+            <td class="small-col">${entry.duration || ''}</td>
+            <td class="small-col">${entry.temp || ''}</td>
+            <td class="small-col">${entry.staff || ''}</td>
+            <td class="small-col">${entry.trays || ''}</td>
+          `;
+          body.appendChild(row);
+        });
+
+        statusEl.textContent = `Loaded ${entries.length} entries.`;
+        periodEl.textContent = year && month ? `Report period: ${year}-${month}` : 'Report period: All';
+        setPrintMode(print);
+        window.__reportReady = true;
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Failed to load data.';
+        window.__reportReady = true;
+      }
+    }
+
+    document.getElementById('load-btn').addEventListener('click', () => {
+      const monthInput = document.getElementById('month-input').value;
+      const url = new URL(window.location.href);
+      url.searchParams.delete('print');
+      if (monthInput) {
+        const [year, month] = monthInput.split('-');
+        url.searchParams.set('year', year);
+        url.searchParams.set('month', month);
+      } else {
+        url.searchParams.delete('year');
+        url.searchParams.delete('month');
+      }
+      window.location.href = url.toString();
+    });
+
+    document.getElementById('pdf-btn').addEventListener('click', () => {
+      const monthInput = document.getElementById('month-input').value;
+      if (!monthInput) {
+        alert('Please choose a month first.');
+        return;
+      }
+      const [year, month] = monthInput.split('-');
+      window.location.href = `/api/cooks/report.pdf?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`;
+    });
+
+    window.addEventListener('load', () => {
+      const { year, month } = getQueryParams();
+      if (year && month) {
+        document.getElementById('month-input').value = `${year}-${month}`;
+      }
+      loadReport();
+    });
+  </script>
+
+</body>
+</html>

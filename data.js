@@ -121,3 +121,17 @@ async function saveCookData(cookData) {
 
   return true;
 }
+
+async function loadRecentCookData() {
+  const res = await fetch('/api/cooks?limit=8');
+  if (!res.ok) return [];
+  return res.json();
+}
+
+async function exportFullCSVData() {
+  const res = await fetch('/api/cooks/export');
+  if (!res.ok) {
+    throw new Error('Export failed');
+  }
+  return await res.blob();
+}

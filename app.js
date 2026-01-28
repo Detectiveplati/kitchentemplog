@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // UI STATE & ELEMENTS
 // ============================================================
 let cooks = [];
@@ -156,10 +156,25 @@ async function saveCook(id) {
   const start = new Date(cook.startTime);
   const end   = new Date(cook.endTime);
 
-  const startDate = start.toISOString().split('T')[0];
-  const startTime = start.toISOString().split('T')[1].slice(0, 8);
-  const endDate   = end.toISOString().split('T')[0];
-  const endTime   = end.toISOString().split('T')[1].slice(0, 8);
+  // Use Singapore time for recorded timestamps
+  const fmtDate = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Singapore',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const fmtTime = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Singapore',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+
+  const startDate = fmtDate.format(start);
+  const startTime = fmtTime.format(start);
+  const endDate   = fmtDate.format(end);
+  const endTime   = fmtTime.format(end);
 
   // Call the data layer instead of directly writing CSV
   try {
@@ -221,8 +236,18 @@ function checkAllTimers() {
 async function loadRecent() {
   try {
     const entries = await loadRecentCookData();
+    const body = document.getElementById('recent-body');
+    if (!body) {
+      console.warn('Recent entries table not found.');
+      return;
+    }
 
-    recentBody.innerHTML = '';
+    body.innerHTML = '';
+    if (!Array.isArray(entries) || entries.length === 0) {
+      body.innerHTML = '<tr><td colspan="9">No recent entries</td></tr>';
+      return;
+    }
+
     entries.forEach(entry => {
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -236,7 +261,7 @@ async function loadRecent() {
         <td class="small-col">${entry.staff}</td>
         <td class="small-col">${entry.trays}</td>
       `;
-      recentBody.appendChild(row);
+      body.appendChild(row);
     });
   } catch (err) {
     console.error("Error loading recent data:", err);
@@ -262,3 +287,8 @@ async function exportFullCSV() {
 // INITIALIZATION
 // ============================================================
 // initializeData() is called from HTML with the appropriate CSV filename
+
+window.addEventListener('load', () => {
+  loadRecent();
+});
+

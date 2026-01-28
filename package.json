@@ -20,6 +20,7 @@
   "homepage": "https://github.com/Detectiveplati/kitchentemplog#readme",
   "dependencies": {
     "express": "^5.2.1",
-    "mongodb": "^7.0.0"
+    "mongodb": "^7.0.0",
+    "puppeteer": "^24.36.1"
   }
 }
