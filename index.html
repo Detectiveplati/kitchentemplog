@@ -34,9 +34,25 @@
       padding: 22px 24px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.06);
     }
+    .hero-header {
+      display:flex;
+      gap:16px;
+      align-items:center;
+    }
+
+    .site-logo {
+      width:84px;
+      height:84px;
+      flex: 0 0 84px;
+      border-radius:8px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      background: linear-gradient(180deg,#fff,#fffaf6);
+      padding:6px;
+    }
+
     .hero h1 {
       margin: 0 0 6px;
-      font-size: 2rem;
+      font-size: 1.8rem;
       letter-spacing: 0.2px;
       text-align: left;
       color: var(--ink);
@@ -103,8 +119,13 @@
 
   <div class="page">
     <div class="hero">
-      <h1>Kitchen Control Center</h1>
-      <p>Choose a department to log cooks, or open reports to export data.</p>
+      <div class="hero-header">
+        <img src="assets/Chilli-Api-Logo-170px.png" alt="ChilliApi logo" class="site-logo" />
+        <div>
+          <h1>Kitchen Control Center</h1>
+          <p>Choose a department to log cooks, or open reports to export data.</p>
+        </div>
+      </div>
     </div>
 
     <section class="section">

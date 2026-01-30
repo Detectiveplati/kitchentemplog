@@ -1,39 +1,44 @@
 # Kitchen Temperature & Timing Log System
 
-A professional-grade tablet application for tracking cooking activities across multiple kitchen departments. Built with vanilla JavaScript for Android tablets, featuring real-time timers, temperature monitoring, and CSV-based data persistence.
+A kitchen cooking log app focused on the Combi Oven department. Built with vanilla JavaScript for tablet use, with real-time timers, temperature tracking, and a Node/Express + MongoDB backend for persistence.
+
+## Summary
+
+This is a kitchen cooking log app for the Combi Oven department. It tracks each cook’s food item, start/end times, duration, core temperature, staff member, and tray count, shows recent entries, and supports CSV export plus PDF reporting through a Node/Express + MongoDB backend.
 
 ## Overview
 
-This system is designed to streamline kitchen operations by providing department-specific cooking logs with automatic data persistence. Each department maintains separate records while sharing a unified codebase, enabling efficient meal preparation tracking and quality control.
+This system streamlines kitchen operations by providing a Combi Oven cooking log with automatic data persistence, recent activity, and exportable reports.
 
 ## Features
 
 ### Core Functionality
-- **Multi-Department Support**: Separate interfaces for Deep Fry, Combi Oven, and Braising departments
-- **Real-Time Timers**: Individual countdown timers for each cooking task
-- **Staff Tracking**: Associate each cook with a specific chef for accountability
-- **Temperature Logging**: Record core temperature readings for cooked items
+- **Combi Oven Log**: Dedicated interface for combi oven cooks
+- **Real-Time Timers**: Individual timers per active cook
+- **Staff Tracking**: Associate each cook with a specific chef
+- **Temperature Logging**: Record core temperature readings
 - **Tray Counting**: Track the number of trays prepared
 - **Recent Activity Display**: Quick view of the last 8 completed cooks
 - **CSV Export**: Full data export for analysis and archiving
+- **PDF Reports**: Printable report via HTML → PDF export
+- **Date-Range Reporting**: Filter logs by start/end date (auto-loads on report page)
 
 ### Technical Highlights
-- **Bilingual Interface**: Full Chinese (Simplified) and English support throughout the UI
-- **Persistent File Handles**: Automatic remembering of CSV file location via IndexedDB
-- **Tablet Optimized**: Responsive layout engineered for 658x858 Android tablets
-- **Offline Capable**: Works without internet connection using File System Access API
-- **Extensible Architecture**: Clean data abstraction layer for future database migration
+- **Bilingual Interface**: Chinese (Simplified) + English UI text
+- **Tablet Optimized**: Responsive layout for 658x858 Android tablets
+- **Node + MongoDB**: Express API with MongoDB persistence
+- **Report Rendering**: HTML report page supports PDF generation
 
 ## Tech Stack
 
 - **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
-- **Storage**: CSV files with IndexedDB handle persistence
-- **APIs**: File System Access API, IndexedDB
+- **Backend**: Node.js, Express
+- **Database**: MongoDB
 - **Target Platform**: Android tablets (658x858 minimum resolution)
 
 ## Architecture
 
-The application follows a 3-layer architecture:
+The application follows a simple client + API architecture:
 
 ```
 ┌─────────────────────────┐
@@ -44,17 +49,14 @@ The application follows a 3-layer architecture:
 └────────────┬────────────┘
              │
 ┌────────────▼────────────┐
-│  Data Layer (data.js)   │
-│   - CSV operations      │
-│   - File persistence    │
-│   - Data abstraction    │
+│  API Layer (server.js)  │
+│   - /api/cooks           │
+│   - CSV/PDF exports     │
 └────────────┬────────────┘
              │
 ┌────────────▼────────────┐
-│   CSV Files             │
-│   - deepfry.csv         │
-│   - combioven.csv       │
-│   - braising.csv        │
+│   MongoDB               │
+│   - cooks collection    │
 └─────────────────────────┘
 ```
 
@@ -64,46 +66,32 @@ This abstraction enables seamless migration to MongoDB or other databases withou
 
 ```
 Kitchen Temp Log/
-├── index.html                 # Home page with department links
+├── index.html                 # Home page
 ├── app.js                     # Core cooking logic & UI management
-├── data.js                    # Data persistence layer
+├── data.js                    # API calls to /api/cooks
+├── server.js                  # Express API server
 ├── styles.css                 # Unified styling (tablet optimized)
-├── README.md                  # This file
-│
+├── assets/                    # Branding assets
+│   └── Chilli-Api-Logo-170px.png
 ├── departments/
-│   ├── deepfry.html          # Deep Fry department interface
-│   ├── combioven.html        # Combi Oven/Grilling interface
-│   └── braising.html         # Braising department interface
-│
-└── (Generated at runtime)
-    ├── deepfry.csv           # Deep Fry cooking logs
-    ├── combioven.csv         # Combi Oven cooking logs
-    └── braising.csv          # Braising cooking logs
+│   ├── combioven.html         # Combi Oven interface
+│   ├── combioven-data.html    # Date range data view
+│   └── combioven-report.html  # Report + PDF export
+└── README.md                  # This file
 ```
 
 ## Department Configuration
 
-### Deep Fry Department
-- **Staff**: Alice, Bob, Charlie (auto-selected: Alice)
-- **Menu Items**: Spring Roll, Chicken, Fish
-- **Data File**: `deepfry.csv`
-
 ### Combi Oven Department
 - **Staff**: Ah Dong (specialized griller)
 - **Menu Items**: 17 grilled items including honey wings, pandan chicken, teriyaki chicken, satay, and more
-- **Data File**: `combioven.csv`
-
-### Braising Department
-- **Staff**: Alice, Bob, Charlie (auto-selected: Alice)
-- **Menu Items**: Beef, Pork, Vegetables
-- **Data File**: `braising.csv`
 
 ## Getting Started
 
 ### Prerequisites
-- Chrome/Chromium-based browser (supports File System Access API)
-- Android tablet (minimum 658×858 resolution recommended)
-- Access to local file system for CSV storage
+- Node.js 18+
+- MongoDB connection string (local or Atlas)
+- Chrome/Chromium-based browser
 
 ### Installation
 
@@ -113,25 +101,30 @@ Kitchen Temp Log/
    cd kitchentemplog
    ```
 
-2. **Open in browser**
-   - Use a local server to avoid CORS issues:
-     ```bash
-     python -m http.server 8000
-     # or
-     npx http-server
-     ```
-   - Navigate to `http://localhost:8000`
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-3. **Select a department**
-   - Click on the desired department emoji on the home page
-   - Select the staff member (auto-selected by default)
-   - Begin logging cooks
+3. **Set environment variables** (create a `.env` file)
+   ```bash
+   MONGODB_URI=mongodb+srv://USER:PASS@cluster/db
+   DB_NAME=kitchenlog
+   PORT=3000
+   ```
+
+4. **Start the server**
+   ```bash
+   node server.js
+   ```
+
+5. **Open in browser**
+   - Navigate to `http://localhost:3000`
 
 ### First-Time Setup
 
-1. When adding the first cook, you'll be prompted to select or create a CSV file
-2. The system remembers your file location for future sessions
-3. Subsequent cooks automatically save to the same file
+1. Ensure MongoDB is reachable via `MONGODB_URI`
+2. Open the Combi Oven page and start logging cooks
 
 ## Usage Workflow
 
@@ -143,7 +136,7 @@ Kitchen Temp Log/
 4. **Monitor**: Watch the real-time timer on the cook card
 5. **End Cooking**: Press "END COOKING" when done
 6. **Log Details**: Enter core temperature and number of trays
-7. **Save**: Click "SAVE" to record in CSV
+7. **Save**: Click "SAVE" to record in the database
 8. **View History**: Recently completed cooks appear in the "Recent Cooks" section
 
 ### Removing a Cook
@@ -154,8 +147,8 @@ Kitchen Temp Log/
 
 ### Export Data
 
-- Click "Export Full CSV" at the bottom to download all records
-- Data includes timestamps, staff names, temperatures, and tray counts
+- Click "Download Full CSV" to export all records
+- Use the report page to export PDF
 
 ## CSV Format
 
@@ -206,21 +199,17 @@ Adjust in `styles.css`:
 
 | Feature | Chrome | Edge | Firefox | Safari |
 |---------|--------|------|---------|--------|
-| File System Access API | ✅ | ✅ | ❌ | ❌ |
-| IndexedDB | ✅ | ✅ | ✅ | ✅ |
-| Recommended | ✅ | ✅ | ❌ | ❌ |
-
-**Note**: Chrome and Edge-based browsers are required for File System Access API functionality.
+| Core App | ✅ | ✅ | ✅ | ✅ |
+| PDF Export | ✅ | ✅ | ✅ | ✅ |
 
 ## Known Limitations
 
-- File System Access API not available in Firefox/Safari (requires alternative storage solution)
 - Tablet optimization targets 658×858 minimum; smaller screens may require scrolling
 - Single user per session (no concurrent multi-user support)
+- PDF export requires Puppeteer to be installed
 
 ## Future Enhancements
 
-- **MongoDB Integration**: Replace CSV with cloud database backend
 - **Multi-User Support**: Concurrent user sessions with conflict resolution
 - **Analytics Dashboard**: Charts and insights on cooking times and temperatures
 - **Mobile App**: Native iOS/Android applications
@@ -234,28 +223,23 @@ Adjust in `styles.css`:
 ### Code Standards
 
 - **UI Layer** (`app.js`): Manages state and DOM interactions
-- **Data Layer** (`data.js`): Handles all persistence operations
+- **Data Layer** (`data.js`): API calls to `server.js`
 - **Styling** (`styles.css`): Unified tablet-optimized styles
 - **Bilingual**: All user-facing text includes Chinese/English
 
-### Making API Changes
+### API Endpoints
 
-The data layer abstraction allows for easy backend swaps. To migrate to a different database:
-
-1. Modify functions in `data.js`:
-   - `getOrCreateCSVFile()` → API authentication
-   - `saveCookData()` → POST request
-   - `loadRecentCookData()` → GET request
-   - `exportFullCSVData()` → Generate export
-
-2. No changes needed in `app.js` - all calls remain compatible
+- `POST /api/cooks` — save cook record
+- `GET /api/cooks?limit=8` — recent entries
+- `GET /api/cooks?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` — date range
+- `GET /api/cooks/export` — CSV export
+- `GET /api/cooks/report.pdf` — PDF report
 
 ### Testing
 
 - Test on actual tablet devices for accurate UI validation
-- Verify CSV format with manual file inspection
+- Verify API responses with date range filters
 - Check bilingual text in all user interfaces
-- Validate file persistence across sessions
 
 ## License
 
