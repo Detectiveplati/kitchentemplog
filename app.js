@@ -117,6 +117,17 @@ function updateTemp(id, value) {
   if (cook) cook.temp = value.trim();
 }
 
+// Set temperature for the most recently finished cook card
+function setLatestCookTemp(value) {
+  if (!value) return false;
+  const tempValue = String(value).trim();
+  const lastFinished = [...cooks].reverse().find(c => c.endTime);
+  if (!lastFinished) return false;
+  lastFinished.temp = tempValue;
+  renderActiveCooks();
+  return true;
+}
+
 function updateTrays(id, value) {
   const cook = cooks.find(c => c.id === id);
   if (cook) cook.trays = value.trim();

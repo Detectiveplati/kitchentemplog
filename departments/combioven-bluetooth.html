@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
+  <title>Combi Oven Kitchen Log (Bluetooth)</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .bt-panel {
+      margin: 10px 0 20px;
+      padding: 10px 12px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .bt-status {
+      color: #555;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+  <img src="../assets/Chilli-Api-Logo-170px.png" alt="ChilliApi" style="width:64px;height:64px;float:left;margin-right:12px;border-radius:6px;">
+  <h1>组合烤箱部门 Combi Oven Kitchen Log (Bluetooth)</h1>
+
+  <div class="bt-panel">
+    <button id="bt-connect" class="export-btn">Connect Thermometer</button>
+    <button id="bt-read" class="export-btn" disabled>Read Temperature</button>
+    <span id="bt-status" class="bt-status">Not connected</span>
+  </div>
+
+  <div id="staff-selector">
+    <strong>厨师名字 Chef Name</strong>
+    <button class="staff-btn" id="staff-AhDong" onclick="setGlobalStaff('Ah Dong')">啊东Ah Dong</button>
+    <button class="staff-btn" id="staff-HuaYun" onclick="setGlobalStaff('Hua Yun')">华云Hua Yun</button>
+    <button class="staff-btn" id="staff-Selva" onclick="setGlobalStaff('Selva')">Selva</button>
+  </div>
+
+  <div id="active-cooks">
+    <h2>现煮的食品 Active / Running Cooks</h2>
+    <div class="active-grid" id="active-grid"></div>
+  </div>
+
+  <div id="menu">
+    <h2>选择要开始烹饪的食物 Select Food to Start Cooking</h2>
+    <div class="food-grid">
+      <div class="food-card" onclick="addNewCook('烤蜜汁鸡翅膀Grilled Honey Chicken Wings')">
+        <span>烤蜜汁鸡翅膀Grilled Honey Chicken Wings</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('泰式香兰叶鸡Roasted Chicken W Pandan Asian Spices')">
+        <span>泰式香兰叶鸡Roasted Chicken W Pandan Asian Spices</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('蜜汁鸡Honey Glazed Chicken')">
+        <span>蜜汁鸡Honey Glazed Chicken</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤日式鸡Grilled Teriyaki Chicken')">
+        <span>烤日式鸡Grilled Teriyaki Chicken</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('鸡肉卷,牛油挞子酱Chicken Roulade with Butter Berry Raisin Sauce')">
+        <span>鸡肉卷,牛油挞子酱Chicken Roulade with Butter Berry Raisin Sauce</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤无骨鸡肉与BBQ酱和黄梨番茄莎莎Grilled Chicken w Pineapple Salsa')">
+        <span>烤无骨鸡肉与BBQ酱和黄梨番茄莎莎Grilled Chicken w Pineapple Salsa</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('鸡肉沙爹(大)Jumbo Chicken Satay')">
+        <span>鸡肉沙爹(大)Jumbo Chicken Satay</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤印第安鸡与小番茄Grilled Cajun Chicken Breast')">
+        <span>烤印第安鸡与小番茄Grilled Cajun Chicken Breast</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤鸡Ayam Panggang')">
+        <span>烤鸡Ayam Panggang</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('香兰叶烤鸡Grilled Pandan Chicken')">
+        <span>香兰叶烤鸡Grilled Pandan Chicken</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤卡津蒜鸡翅Grilled Cajun Garlic Winglet')">
+        <span>烤卡津蒜鸡翅Grilled Cajun Garlic Winglet</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤蜜汁鸡翅Grilled Honey Chicken Winglet')">
+        <span>烤蜜汁鸡翅Grilled Honey Chicken Winglet</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤BBQ酱鸡翅BBQ Sauce Grilled Chicken Winglet')">
+        <span>烤BBQ酱鸡翅BBQ Sauce Grilled Chicken Winglet</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤无骨鸡肉与BBQ酱和黄梨番茄莎莎Grilled Boneless Chicken w BBQ Sauce topped w Pineapple Salsa')">
+        <span>烤无骨鸡肉与BBQ酱和黄梨番茄莎莎Grilled Boneless Chicken w BBQ Sauce topped w Pineapple Salsa</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤黑椒鸡Grilled Black Pepper Chicken')">
+        <span>烤黑椒鸡Grilled Black Pepper Chicken</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤黑椒鸡翅Grilled Black Pepper Chicken Winglet')">
+        <span>烤黑椒鸡翅Grilled Black Pepper Chicken Winglet</span>
+      </div>
+      <div class="food-card" onclick="addNewCook('烤鱼片与厨师三巴酱Grilled Fish Fillet w Chef Sambal')">
+        <span>烤鱼片与厨师三巴酱Grilled Fish Fillet w Chef Sambal</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <div id="log">
+    <h3>Recent Entries (last 8)</h3>
+    <table id="recent-table">
+      <thead>
+        <tr>
+          <th class="food-col">Food Item</th>
+          <th class="date-col">Start Date</th>
+          <th class="time-col">Start Time</th>
+          <th class="date-col">End Date</th>
+          <th class="time-col">End Time</th>
+          <th class="small-col">Duration (min)</th>
+          <th class="small-col">Core Temp (°C)</th>
+          <th class="small-col">Staff</th>
+          <th class="small-col">Trays</th>
+        </tr>
+      </thead>
+      <tbody id="recent-body"></tbody>
+    </table>
+    <button onclick="exportFullCSV()" class="export-btn">
+      Download Full CSV
+    </button>
+    <a class="export-btn" href="../index.html">Back</a>
+  </div>
+
+  <script src="../data.js"></script>
+  <script src="../app.js"></script>
+  <script>
+    // Bluetooth UUIDs — replace with your thermometer's values
+    const BT_SERVICE_UUID = '00001809-0000-1000-8000-00805f9b34fb';
+    const BT_CHARACTERISTIC_UUID = '00002a1c-0000-1000-8000-00805f9b34fb';
+
+    const btStatus = document.getElementById('bt-status');
+    const btConnect = document.getElementById('bt-connect');
+    const btRead = document.getElementById('bt-read');
+
+    let btDevice = null;
+    let btCharacteristic = null;
+
+    function setBtStatus(message) {
+      btStatus.textContent = message;
+    }
+
+    function parseTemperatureFromBLE(dataView) {
+      // Device-specific parsing is required. This example assumes a float32 at offset 1.
+      if (dataView.byteLength < 5) return null;
+      return dataView.getFloat32(1, true);
+    }
+
+    async function connectThermometer() {
+      try {
+        setBtStatus('Requesting device...');
+        btDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [BT_SERVICE_UUID] }]
+        });
+
+        const server = await btDevice.gatt.connect();
+        const service = await server.getPrimaryService(BT_SERVICE_UUID);
+        btCharacteristic = await service.getCharacteristic(BT_CHARACTERISTIC_UUID);
+
+        setBtStatus(`Connected to ${btDevice.name || 'thermometer'}`);
+        btRead.disabled = false;
+
+        // Auto-notify if supported
+        if (btCharacteristic.properties.notify) {
+          await btCharacteristic.startNotifications();
+          btCharacteristic.addEventListener('characteristicvaluechanged', event => {
+            const temp = parseTemperatureFromBLE(event.target.value);
+            if (temp !== null) {
+              setLatestCookTemp(temp.toFixed(1));
+              setBtStatus(`Temp updated: ${temp.toFixed(1)} °C`);
+            }
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        setBtStatus('Connection failed. Check permissions/UUIDs.');
+      }
+    }
+
+    async function readOnce() {
+      if (!btCharacteristic) return;
+      try {
+        const value = await btCharacteristic.readValue();
+        const temp = parseTemperatureFromBLE(value);
+        if (temp === null || Number.isNaN(temp)) {
+          setBtStatus('Read failed: unsupported format');
+          return;
+        }
+        setLatestCookTemp(temp.toFixed(1));
+        setBtStatus(`Temp updated: ${temp.toFixed(1)} °C`);
+      } catch (err) {
+        console.error(err);
+        setBtStatus('Read failed.');
+      }
+    }
+
+    btConnect.addEventListener('click', connectThermometer);
+    btRead.addEventListener('click', readOnce);
+
+    // Auto-select first staff member
+    autoSelectFirstStaff();
+    // Load recent entries on page load
+    loadRecent();
+  </script>
+</body>
+</html>
