@@ -23,6 +23,7 @@
     body.print .print-only {
       display: block;
     }
+
   </style>
 </head>
 <body>
@@ -32,9 +33,11 @@
   <div id="status" class="no-print"></div>
 
   <div class="report-controls no-print">
-    <label for="month-input">Month:</label>
-    <input id="month-input" type="month" />
-    <button id="load-btn" class="export-btn">Load</button>
+    <label for="start-date">Start:</label>
+    <input id="start-date" type="date" />
+    <label for="end-date">End:</label>
+    <input id="end-date" type="date" />
+    <!-- Load Range removed: date inputs will auto-load when both selected -->
     <button id="pdf-btn" class="export-btn">Download PDF</button>
     <a class="export-btn" href="../index.html">Back</a>
   </div>
@@ -68,8 +71,8 @@
     function getQueryParams() {
       const params = new URLSearchParams(window.location.search);
       return {
-        year: params.get('year'),
-        month: params.get('month'),
+        startDate: params.get('startDate'),
+        endDate: params.get('endDate'),
         print: params.get('print') === '1'
       };
     }
@@ -82,12 +85,11 @@
       const statusEl = document.getElementById('status');
       const body = document.getElementById('recent-body');
       const periodEl = document.getElementById('report-period');
-      const { year, month, print } = getQueryParams();
+      const { startDate, endDate, print } = getQueryParams();
 
       const qs = [];
-      if (year && month) {
-        qs.push(`year=${encodeURIComponent(year)}`, `month=${encodeURIComponent(month)}`);
-      }
+      if (startDate) qs.push(`startDate=${encodeURIComponent(startDate)}`);
+      if (endDate) qs.push(`endDate=${encodeURIComponent(endDate)}`);
       qs.push('limit=1000');
       const url = `/api/cooks?${qs.join('&')}`;
 
@@ -100,7 +102,9 @@
         if (!entries.length) {
           body.innerHTML = '<tr><td colspan="9">No entries found</td></tr>';
           statusEl.textContent = 'No data yet.';
-          periodEl.textContent = year && month ? `Report period: ${year}-${month}` : 'Report period: All';
+          periodEl.textContent = (startDate || endDate)
+            ? `Report period: ${startDate || '...'} to ${endDate || '...'}`
+            : 'Report period: All';
           window.__reportReady = true;
           return;
         }
@@ -122,7 +126,9 @@
         });
 
         statusEl.textContent = `Loaded ${entries.length} entries.`;
-        periodEl.textContent = year && month ? `Report period: ${year}-${month}` : 'Report period: All';
+        periodEl.textContent = (startDate || endDate)
+          ? `Report period: ${startDate || '...'} to ${endDate || '...'}`
+          : 'Report period: All';
         setPrintMode(print);
         window.__reportReady = true;
       } catch (err) {
@@ -132,36 +138,54 @@
       }
     }
 
-    document.getElementById('load-btn').addEventListener('click', () => {
-      const monthInput = document.getElementById('month-input').value;
-      const url = new URL(window.location.href);
-      url.searchParams.delete('print');
-      if (monthInput) {
-        const [year, month] = monthInput.split('-');
-        url.searchParams.set('year', year);
-        url.searchParams.set('month', month);
-      } else {
-        url.searchParams.delete('year');
-        url.searchParams.delete('month');
-      }
-      window.location.href = url.toString();
-    });
+    // Auto-load when both dates are selected (or clear when both empty)
+    function applyDateFilter(autoOnlyBoth = true) {
+      const start = document.getElementById('start-date').value;
+      const end = document.getElementById('end-date').value;
 
-    document.getElementById('pdf-btn').addEventListener('click', () => {
-      const monthInput = document.getElementById('month-input').value;
-      if (!monthInput) {
-        alert('Please choose a month first.');
+      // If configured to require both, only apply when both are set
+      if (autoOnlyBoth && !start && !end) {
+        // nothing selected — clear filters
+        const urlClear = new URL(window.location.href);
+        urlClear.searchParams.delete('startDate');
+        urlClear.searchParams.delete('endDate');
+        urlClear.searchParams.delete('print');
+        history.replaceState(null, '', urlClear.toString());
+        loadReport();
         return;
       }
-      const [year, month] = monthInput.split('-');
-      window.location.href = `/api/cooks/report.pdf?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`;
+
+      if (autoOnlyBoth && (!start || !end)) return; // wait until both are chosen
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete('print');
+      start ? url.searchParams.set('startDate', start) : url.searchParams.delete('startDate');
+      end ? url.searchParams.set('endDate', end) : url.searchParams.delete('endDate');
+      history.replaceState(null, '', url.toString());
+      loadReport();
+    }
+
+    document.getElementById('start-date').addEventListener('change', () => applyDateFilter(true));
+    document.getElementById('end-date').addEventListener('change', () => applyDateFilter(true));
+
+    document.getElementById('pdf-btn').addEventListener('click', () => {
+      const start = document.getElementById('start-date').value;
+      const end = document.getElementById('end-date').value;
+      // Open in a new tab so browsers that block "download on navigation" still work.
+      const qs = [];
+      if (start) qs.push(`startDate=${encodeURIComponent(start)}`);
+      if (end) qs.push(`endDate=${encodeURIComponent(end)}`);
+      if (!qs.length) {
+        alert('Please choose a start and/or end date first.');
+        return;
+      }
+      window.open(`/api/cooks/report.pdf?${qs.join('&')}`, '_blank');
     });
 
     window.addEventListener('load', () => {
-      const { year, month } = getQueryParams();
-      if (year && month) {
-        document.getElementById('month-input').value = `${year}-${month}`;
-      }
+      const { startDate, endDate } = getQueryParams();
+      if (startDate) document.getElementById('start-date').value = startDate;
+      if (endDate) document.getElementById('end-date').value = endDate;
       loadReport();
     });
   </script>

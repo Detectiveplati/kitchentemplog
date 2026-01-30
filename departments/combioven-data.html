@@ -13,11 +13,13 @@
   <div id="status"></div>
 
   <div id="log">
-    <h3>Recent Entries</h3>
+    <h3>Entries by Date Range</h3>
     <div style="margin: 10px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-      <label for="month-input">Export month:</label>
-      <input id="month-input" type="month" />
-      <button id="export-month-btn" class="export-btn">Export Month CSV</button>
+      <label for="start-date">Start:</label>
+      <input id="start-date" type="date" />
+      <label for="end-date">End:</label>
+      <input id="end-date" type="date" />
+      <button id="load-range-btn" class="export-btn">Load Range</button>
     </div>
     <table id="recent-table">
       <thead>
@@ -35,7 +37,7 @@
       </thead>
       <tbody id="recent-body"></tbody>
     </table>
-    <button id="refresh-btn" class="export-btn">Refresh</button>
+    <button id="refresh-btn" class="export-btn">Refresh (last 100)</button>
     <a class="export-btn" href="../index.html">Back</a>
   </div>
 
@@ -43,15 +45,21 @@
     async function loadCombiovenData() {
       const statusEl = document.getElementById('status');
       const body = document.getElementById('recent-body');
+      body.innerHTML = ''; // clear previous rows before loading
       try {
-        const res = await fetch('/api/cooks?limit=100');
+        const start = document.getElementById('start-date').value;
+        const end = document.getElementById('end-date').value;
+        const qs = [];
+        if (start) qs.push(`startDate=${encodeURIComponent(start)}`);
+        if (end) qs.push(`endDate=${encodeURIComponent(end)}`);
+        qs.push('limit=100');
+        const res = await fetch(`/api/cooks?${qs.join('&')}`);
         if (!res.ok) throw new Error('Failed to load data');
         const entries = await res.json();
 
-        body.innerHTML = '';
         if (!entries.length) {
           body.innerHTML = '<tr><td colspan="9">No entries found</td></tr>';
-          statusEl.textContent = 'No data yet.';
+          statusEl.textContent = start || end ? 'No data in that range.' : 'No data yet.';
           return;
         }
 
@@ -71,26 +79,25 @@
           body.appendChild(row);
         });
 
-        statusEl.textContent = `Loaded ${entries.length} entries.`;
+        if (start || end) {
+          statusEl.textContent = `Loaded ${entries.length} entries for ${start || '...'} to ${end || '...'}.`;
+        } else {
+          statusEl.textContent = `Loaded ${entries.length} recent entries.`;
+        }
       } catch (err) {
         console.error(err);
+        body.innerHTML = '<tr><td colspan="9">Failed to load data</td></tr>';
         statusEl.textContent = 'Failed to load data.';
       }
     }
 
-    document.getElementById('refresh-btn').addEventListener('click', loadCombiovenData);
-    window.addEventListener('load', loadCombiovenData);
-
-    document.getElementById('export-month-btn').addEventListener('click', () => {
-      const monthInput = document.getElementById('month-input').value;
-      if (!monthInput) {
-        alert('Please choose a month first.');
-        return;
-      }
-      const [year, month] = monthInput.split('-');
-      const url = `/api/cooks/export?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`;
-      window.location.href = url;
+    document.getElementById('load-range-btn').addEventListener('click', loadCombiovenData);
+    document.getElementById('refresh-btn').addEventListener('click', () => {
+      document.getElementById('start-date').value = '';
+      document.getElementById('end-date').value = '';
+      loadCombiovenData();
     });
+    window.addEventListener('load', loadCombiovenData);
   </script>
 
 </body>
