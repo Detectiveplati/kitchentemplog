@@ -1,6 +1,6 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 const path = require('path');
 let puppeteer = null;
 try {
@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Change this later to move online (Atlas URL)
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://admin:UM3vaue7LJCLNMQn@logcluster.2jbvvdb.mongodb.net/?appName=LogCluster';
 const DB_NAME = process.env.DB_NAME || 'kitchenlog';
 
 app.use(express.json());
@@ -27,12 +27,17 @@ app.use((err, req, res, next) => {
 app.use(express.static(__dirname));
 
 let db;
-MongoClient.connect(MONGODB_URI)
+MongoClient.connect(MONGODB_URI, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+})
   .then(client => {
     db = client.db(DB_NAME);
     console.log('MongoDB connected');
-    // Bind to HOST so the UI is reachable from other devices on the LAN.
-    app.listen(PORT, HOST, () => console.log(`Server running on http://localhost:${PORT}`));
+    app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
   })
   .catch(err => {
     console.error('MongoDB connection error:', err);
@@ -56,15 +61,20 @@ function validateCook(cook) {
 function buildDateFilter(query) {
   const { year, month, startDate, endDate } = query;
 
-  // Prefer explicit date range if provided
+  // If explicit start/end provided, use range filter
   if (startDate || endDate) {
-    const range = {};
-    if (startDate) range.$gte = startDate;
-    if (endDate) range.$lte = endDate;
-    return { startDate: range };
+    const filter = {};
+    if (startDate && endDate) {
+      filter.startDate = { $gte: startDate, $lte: endDate };
+    } else if (startDate) {
+      filter.startDate = { $gte: startDate };
+    } else if (endDate) {
+      filter.startDate = { $lte: endDate };
+    }
+    return filter;
   }
 
-  // Backward-compatible month filter
+  // Fallback to year/month filtering
   if (year && month) {
     const ym = `${year}-${String(month).padStart(2, '0')}`;
     return { startDate: new RegExp(`^${ym}-`) };
@@ -93,10 +103,8 @@ app.post('/api/cooks', requireDb, async (req, res) => {
 // Load recent cook data
 app.get('/api/cooks', requireDb, async (req, res) => {
   try {
-    console.log('GET /api/cooks query:', req.query);
     const limit = parseInt(req.query.limit || '8', 10);
     const filter = buildDateFilter(req.query);
-    console.log('GET /api/cooks filter:', filter);
     const cooks = await db.collection('cooks')
       .find(filter)
       .sort({ createdAt: -1 })
@@ -113,13 +121,13 @@ app.get('/api/cooks', requireDb, async (req, res) => {
 // Export full CSV
 app.get('/api/cooks/export', requireDb, async (req, res) => {
   try {
-    const { year, month } = req.query;
+    const { year, month, startDate, endDate } = req.query;
     const filter = buildDateFilter(req.query);
     const cooks = await db.collection('cooks').find(filter).sort({ createdAt: 1 }).toArray();
 
     const headers = [
       'Food Item','Start Date','Start Time','End Date','End Time',
-      'Duration (min)','Core Temp (°C)','Staff','Trays'
+      'Duration (min)','Core Temp (�C)','Staff','Trays'
     ];
 
     const rows = cooks.map(c => [
@@ -153,19 +161,15 @@ app.get('/api/cooks/export', requireDb, async (req, res) => {
 // Export PDF report (HTML -> PDF)
 app.get('/api/cooks/report.pdf', requireDb, async (req, res) => {
   try {
-    console.log('GET /api/cooks/report.pdf query:', req.query);
     if (!puppeteer) {
       return res.status(500).json({ error: 'PDF export requires puppeteer. Install it with: npm install puppeteer' });
     }
 
-    const { year, month, date, startDate, endDate } = req.query;
+    const { year, month, startDate, endDate } = req.query;
     const qs = [];
-    if (startDate || endDate) {
-      if (startDate) qs.push(`startDate=${encodeURIComponent(startDate)}`);
-      if (endDate) qs.push(`endDate=${encodeURIComponent(endDate)}`);
-    } else if (date) {
-      qs.push(`startDate=${encodeURIComponent(date)}`, `endDate=${encodeURIComponent(date)}`);
-    } else if (year && month) {
+    if (startDate) qs.push(`startDate=${encodeURIComponent(startDate)}`);
+    if (endDate) qs.push(`endDate=${encodeURIComponent(endDate)}`);
+    if (!startDate && !endDate && year && month) {
       qs.push(`year=${encodeURIComponent(year)}`, `month=${encodeURIComponent(month)}`);
     }
     qs.push('print=1');
@@ -185,17 +189,7 @@ app.get('/api/cooks/report.pdf', requireDb, async (req, res) => {
     await browser.close();
 
     let suffix = 'all';
-    if (startDate || endDate) {
-      if (startDate && endDate) {
-        suffix = `${startDate}_to_${endDate}`;
-      } else if (startDate) {
-        suffix = `from_${startDate}`;
-      } else {
-        suffix = `to_${endDate}`;
-      }
-    } else if (date) {
-      suffix = date;
-    } else if (year && month) {
+    if (year && month) {
       const monthNames = [
         'January','February','March','April','May','June',
         'July','August','September','October','November','December'
@@ -207,8 +201,8 @@ app.get('/api/cooks/report.pdf', requireDb, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="kitchenlog-${suffix}.pdf"`);
     res.send(pdfBuffer);
   } catch (err) {
-    console.error('PDF export failed:', err);
-    res.status(500).json({ error: 'PDF export failed', details: err?.message || String(err) });
+    console.error(err);
+    res.status(500).json({ error: 'PDF export failed' });
   }
 });
 
