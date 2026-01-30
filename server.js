@@ -1,4 +1,5 @@
-﻿const express = require('express');
+require('dotenv').config();
+const express = require('express');
 const { MongoClient } = require('mongodb');
 const path = require('path');
 let puppeteer = null;
@@ -9,7 +10,8 @@ try {
 }
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Change this later to move online (Atlas URL)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
@@ -104,7 +106,7 @@ app.get('/api/cooks/export', requireDb, async (req, res) => {
 
     const headers = [
       'Food Item','Start Date','Start Time','End Date','End Time',
-      'Duration (min)','Core Temp (°C)','Staff','Trays'
+      'Duration (min)','Core Temp (�C)','Staff','Trays'
     ];
 
     const rows = cooks.map(c => [
