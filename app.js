@@ -32,9 +32,22 @@ function autoSelectFirstStaff() {
 // ============================================================
 // COOK MANAGEMENT (no data layer calls here - UI only)
 // ============================================================
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(400px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
 
 function addNewCook(food) {
   if (!currentStaff) {
+    showToast("Please select a staff member first!", "error");
     alert("Please select a staff member (Alice, Bob, or Charlie) first.");
     return;
   }
@@ -51,6 +64,7 @@ function addNewCook(food) {
     timerRunning: false
   });
   renderActiveCooks();
+  showToast(`✓ Added ${food}`);
   statusEl.textContent = `已添加 Added ${food} by ${currentStaff} — 按开始做好准备 press Start when ready.`;
 }
 
@@ -98,6 +112,7 @@ function startCook(id) {
   cook.timerRunning = true;
   renderActiveCooks();
   startGlobalTimer();
+  showToast(`🔥 Started cooking: ${cook.food}`);
 }
 
 function endCook(id) {
