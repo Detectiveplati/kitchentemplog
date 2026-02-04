@@ -1,0 +1,27 @@
+{
+  "name": "projects-temp-log",
+  "version": "1.0.0",
+  "description": "A professional-grade tablet application for tracking cooking activities across multiple kitchen departments. Built with vanilla JavaScript for Android tablets, featuring real-time timers, temperature monitoring, and CSV-based data persistence.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Detectiveplati/kitchentemplog.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Detectiveplati/kitchentemplog/issues"
+  },
+  "homepage": "https://github.com/Detectiveplati/kitchentemplog#readme",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "mongodb": "^7.0.0",
+    "puppeteer": "^24.36.1"
+  }
+}
