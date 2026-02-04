@@ -31,7 +31,10 @@ MongoClient.connect(MONGODB_URI)
   .then(client => {
     db = client.db(DB_NAME);
     console.log('MongoDB connected');
-    app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+    app.listen(PORT, HOST, () => {
+      console.log(`Server running on http://${HOST}:${PORT}`);
+      console.log(`Access from tablet: http://<your-computer-ip>:${PORT}`);
+    });
   })
   .catch(err => {
     console.error('MongoDB connection error:', err);
