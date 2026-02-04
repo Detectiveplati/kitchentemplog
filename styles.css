@@ -97,6 +97,12 @@ h1 {
 
 #active-cooks {
   margin-bottom: 40px;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(180deg,var(--bg-1),var(--bg-2));
+  z-index: 100;
+  padding: 10px 0;
+  margin-top: -10px;
 }
 
 .active-grid {
