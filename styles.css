@@ -105,6 +105,11 @@ h1 {
   margin-top: -10px;
 }
 
+#active-cooks h2 {
+  font-size: 1.1rem;
+  margin: 8px 0;
+}
+
 .active-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -175,6 +180,22 @@ button {
   margin: 30px 0 20px;
 }
 
+.food-category {
+  margin-bottom: 40px;
+}
+
+.category-header {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 20px 0 16px;
+  padding: 12px 20px;
+  background: linear-gradient(90deg, #fff 0%, #fef5f1 100%);
+  border-left: 5px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
 .food-grid {
   display: flex;
   flex-wrap: wrap;
@@ -207,10 +228,24 @@ button {
 }
 
 .food-card span {
-  display: block;
-  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.96rem;
   padding: 12px;
   font-weight: 600;
+}
+
+.food-card .chinese {
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+}
+
+.food-card .english {
+  padding-top: 4px;
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
 }
 
 #status {
