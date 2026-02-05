@@ -4,6 +4,37 @@
 let cooks = [];
 let globalTimerId = null;
 let currentStaff = null;  // 'Alice', 'Bob', 'Charlie' or null
+let wakeLock = null;
+
+// ============================================================
+// SCREEN WAKE LOCK - Keep screen on
+// ============================================================
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Screen wake lock activated');
+      
+      wakeLock.addEventListener('release', () => {
+        console.log('Screen wake lock released');
+      });
+    } else {
+      console.log('Wake Lock API not supported');
+    }
+  } catch (err) {
+    console.error('Wake lock request failed:', err);
+  }
+}
+
+// Re-request wake lock when page becomes visible again
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && wakeLock === null) {
+    await requestWakeLock();
+  }
+});
+
+// Request wake lock on page load
+requestWakeLock();
 
 const activeGrid = document.getElementById('active-grid');
 const statusEl = document.getElementById('status');
