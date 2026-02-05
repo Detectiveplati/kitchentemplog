@@ -304,14 +304,13 @@ button {
   width: 100%;
   border-collapse: collapse;
   background: white;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   overflow: hidden;
-  font-size: 0.85rem;
 }
 
 #recent-table th,
 #recent-table td {
-  padding: 10px;
+  padding: 6px 8px;
   text-align: left;
   border-bottom: 1px solid #eee;
 }
@@ -320,6 +319,7 @@ button {
   background: #faf7f5;
   font-weight: 700;
   color: #333;
+  padding: 8px;
 }
 
 #recent-table tr:last-child td {

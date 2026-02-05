@@ -23,7 +23,31 @@
     body.print .print-only {
       display: block;
     }
-
+    /* PDF optimization */
+    @media print {
+      body {
+        margin: 0;
+        padding: 8px;
+      }
+      h1 {
+        font-size: 1.2rem;
+        margin: 8px 0;
+      }
+      img {
+        width: 40px !important;
+        height: 40px !important;
+      }
+      #recent-table {
+        font-size: 0.7rem;
+      }
+      #recent-table th,
+      #recent-table td {
+        padding: 4px 6px;
+      }
+      #recent-table th {
+        padding: 6px;
+      }
+    }
   </style>
 </head>
 <body>
