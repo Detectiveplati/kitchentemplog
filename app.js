@@ -158,6 +158,47 @@ function endCook(id) {
   checkAllTimers();
 }
 
+// ============================================================
+// BULK ACTIONS - Start/End All Cooks
+// ============================================================
+function startAllCooks() {
+  const unstarted = cooks.filter(c => !c.startTime);
+  if (unstarted.length === 0) {
+    showToast("No cooks to start", "error");
+    return;
+  }
+  
+  unstarted.forEach(cook => {
+    cook.startTime = Date.now();
+    cook.timerRunning = true;
+  });
+  
+  renderActiveCooks();
+  startGlobalTimer();
+  showToast(`🔥 Started ${unstarted.length} cook(s)`);
+}
+
+function endAllCooks() {
+  const running = cooks.filter(c => c.startTime && !c.endTime);
+  if (running.length === 0) {
+    showToast("No running cooks to end", "error");
+    return;
+  }
+  
+  const now = Date.now();
+  running.forEach(cook => {
+    cook.endTime = now;
+    const sec = (now - cook.startTime) / 1000;
+    cook.duration = (sec / 60).toFixed(1);
+    cook.timerRunning = false;
+  });
+  
+  renderActiveCooks();
+  checkAllTimers();
+  showToast(`⏹️ Ended ${running.length} cook(s)`);
+}
+
+
 function updateTemp(id, value) {
   const cook = cooks.find(c => c.id === id);
   if (cook) cook.temp = value.trim();

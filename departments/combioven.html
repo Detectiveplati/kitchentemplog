@@ -24,7 +24,13 @@
   </div>
 
   <div id="active-cooks">
-    <h2>现煮的食品 Active / Running Cooks</h2>
+    <div class="active-header">
+      <h2>现煮的食品 Active / Running Cooks</h2>
+      <div class="bulk-actions">
+        <button class="bulk-btn start-all-btn" onclick="startAllCooks()">🔥 开始全部 Start All</button>
+        <button class="bulk-btn end-all-btn" onclick="endAllCooks()">⏹️ 停止全部 End All</button>
+      </div>
+    </div>
     <div class="active-grid" id="active-grid"></div>
   </div>
 
