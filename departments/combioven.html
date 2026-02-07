@@ -9,11 +9,43 @@
   <link rel="manifest" href="../manifest.json">
   <title>Combi Oven Kitchen Log - Multi Cook</title>
   <link rel="stylesheet" href="../styles.css">
+  <style>
+    .bt-panel {
+      margin: 10px 0 20px;
+      padding: 10px 12px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .bt-status {
+      color: #555;
+      font-size: 0.95rem;
+      flex: 1;
+      min-width: 200px;
+    }
+    .bt-temp {
+      font-weight: bold;
+      color: #d32f2f;
+      font-size: 1.1rem;
+    }
+  </style>
 </head>
 <body>
 
   <img src="../assets/Chilli-Api-Logo-170px.png" alt="ChilliApi" style="width:64px;height:64px;float:left;margin-right:12px;border-radius:6px;">
   <h1>组合烤箱部门 Combi Oven Kitchen Log</h1>
+
+  <!-- Bluetooth Thermometer Panel -->
+  <div class="bt-panel">
+    <button id="bt-connect" class="export-btn">🌡️ Connect Thermometer</button>
+    <button id="bt-read" class="export-btn" disabled>📖 Read Temperature</button>
+    <span id="bt-status" class="bt-status">Not connected</span>
+    <span id="bt-temp" class="bt-temp"></span>
+  </div>
 
   <div id="staff-selector">
     <strong>厨师名字 Chef Name</strong>
@@ -375,7 +407,166 @@
   <script src="../data.js"></script>
   <script src="../app.js"></script>
   <script>
-    // CSV init removed (MongoDB API only)
+    // ============================================================
+    // BLUETOOTH THERMOMETER INTEGRATION
+    // ============================================================
+    // ETI Thermometer UUIDs — UPDATE THESE based on your ETI thermometer documentation
+    // These are standard Health Thermometer Service UUIDs (GATT)
+    // If ETI uses custom UUIDs, replace them here
+    const BT_SERVICE_UUID = '00001809-0000-1000-8000-00805f9b34fb';  // Health Thermometer Service
+    const BT_CHARACTERISTIC_UUID = '00002a1c-0000-1000-8000-00805f9b34fb';  // Temperature Measurement
+
+    const btStatus = document.getElementById('bt-status');
+    const btConnect = document.getElementById('bt-connect');
+    const btRead = document.getElementById('bt-read');
+    const btTemp = document.getElementById('bt-temp');
+
+    let btDevice = null;
+    let btCharacteristic = null;
+
+    function setBtStatus(message) {
+      btStatus.textContent = message;
+    }
+
+    function setBtTemp(temp) {
+      if (temp !== null && !isNaN(temp)) {
+        btTemp.textContent = `${temp.toFixed(1)} °C`;
+      } else {
+        btTemp.textContent = '';
+      }
+    }
+
+    // Parse temperature from BLE data
+    // Standard GATT Temperature Measurement format:
+    // Byte 0: Flags
+    // Bytes 1-4: Temperature (float32 or IEEE-11073)
+    function parseTemperatureFromBLE(dataView) {
+      if (dataView.byteLength < 5) {
+        console.warn('Temperature data too short:', dataView.byteLength, 'bytes');
+        return null;
+      }
+
+      const flags = dataView.getUint8(0);
+      const isFahrenheit = (flags & 0x01) === 0x01;
+
+      // Attempt standard float32 parsing (little-endian)
+      try {
+        let tempValue = dataView.getFloat32(1, true);
+        
+        // Convert Fahrenheit to Celsius if needed
+        if (isFahrenheit) {
+          tempValue = (tempValue - 32) * 5 / 9;
+        }
+
+        // Validate reasonable temperature range for food (-20 to 300°C)
+        if (tempValue < -20 || tempValue > 300) {
+          console.warn('Temperature out of range:', tempValue);
+          return null;
+        }
+
+        return tempValue;
+      } catch (err) {
+        console.error('Failed to parse temperature:', err);
+        return null;
+      }
+    }
+
+    // Connect to Bluetooth thermometer
+    async function connectThermometer() {
+      try {
+        setBtStatus('Requesting device...');
+        setBtTemp(null);
+        
+        // Request Bluetooth device
+        btDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [BT_SERVICE_UUID] }],
+          optionalServices: [BT_SERVICE_UUID]
+        });
+
+        setBtStatus('Connecting...');
+        const server = await btDevice.gatt.connect();
+        
+        setBtStatus('Getting service...');
+        const service = await server.getPrimaryService(BT_SERVICE_UUID);
+        
+        setBtStatus('Getting characteristic...');
+        btCharacteristic = await service.getCharacteristic(BT_CHARACTERISTIC_UUID);
+
+        setBtStatus(`✓ Connected to ${btDevice.name || 'ETI Thermometer'}`);
+        btRead.disabled = false;
+
+        // Enable auto-notifications if supported
+        if (btCharacteristic.properties.notify) {
+          await btCharacteristic.startNotifications();
+          btCharacteristic.addEventListener('characteristicvaluechanged', handleTemperatureUpdate);
+          setBtStatus(`✓ Connected (auto-update enabled)`);
+        }
+
+        // Handle disconnection
+        btDevice.addEventListener('gattserverdisconnected', () => {
+          setBtStatus('❌ Disconnected');
+          setBtTemp(null);
+          btRead.disabled = true;
+          btCharacteristic = null;
+        });
+
+      } catch (err) {
+        console.error('Bluetooth connection error:', err);
+        if (err.name === 'NotFoundError') {
+          setBtStatus('❌ No thermometer found. Check it\'s powered on.');
+        } else if (err.name === 'SecurityError') {
+          setBtStatus('❌ Bluetooth not allowed. Use HTTPS or localhost.');
+        } else {
+          setBtStatus(`❌ Connection failed: ${err.message}`);
+        }
+        btRead.disabled = true;
+      }
+    }
+
+    // Handle temperature notification updates
+    function handleTemperatureUpdate(event) {
+      const temp = parseTemperatureFromBLE(event.target.value);
+      if (temp !== null) {
+        setBtTemp(temp);
+        // Auto-fill the most recent cook's temperature field
+        setLatestCookTemp(temp.toFixed(1));
+      }
+    }
+
+    // Manual read temperature
+    async function readTemperature() {
+      if (!btCharacteristic) {
+        setBtStatus('❌ Not connected');
+        return;
+      }
+      
+      try {
+        setBtStatus('Reading...');
+        const value = await btCharacteristic.readValue();
+        const temp = parseTemperatureFromBLE(value);
+        
+        if (temp === null || isNaN(temp)) {
+          setBtStatus('❌ Invalid temperature data');
+          return;
+        }
+        
+        setBtTemp(temp);
+        setLatestCookTemp(temp.toFixed(1));
+        setBtStatus(`✓ Temperature read: ${temp.toFixed(1)} °C`);
+        
+      } catch (err) {
+        console.error('Read error:', err);
+        setBtStatus(`❌ Read failed: ${err.message}`);
+      }
+    }
+
+    // Attach event listeners
+    btConnect.addEventListener('click', connectThermometer);
+    btRead.addEventListener('click', readTemperature);
+
+    // ============================================================
+    // APP INITIALIZATION
+    // ============================================================
     // Auto-select first staff member
     autoSelectFirstStaff();
     // Load recent entries on page load
