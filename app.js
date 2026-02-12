@@ -119,9 +119,10 @@ function renderActiveCooks() {
           <input type="number" step="0.1" min="0" max="150" inputmode="decimal" placeholder="核心温度 °C" value="${cook.temp}" oninput="sanitizeNumberInput(this, true)" onchange="updateTemp(${cook.id}, this.value)">
           <input type="number" min="1" step="1" inputmode="numeric" placeholder="盘子" value="${cook.trays}" oninput="sanitizeNumberInput(this, false)" onchange="updateTrays(${cook.id}, this.value)">
           <button class="save-btn" onclick="saveCook(${cook.id})">保存 SAVE</button>
+          <button class="start-btn" onclick="resumeCook(${cook.id})">继续烹饪 RESUME</button>
         </div>
       ` : ''}
-      ${!cook.startTime || cook.endTime ? `<button class="back-btn" onclick="removeCook(${cook.id})">取消/删除 Cancel / Remove</button>` : ''}
+      ${!cook.startTime || cook.endTime ? `<button class="back-btn" onclick="confirmCancelCook(${cook.id})">取消/删除 Cancel / Remove</button>` : ''}
     `;
     activeGrid.appendChild(card);
   });
@@ -156,6 +157,25 @@ function endCook(id) {
   cook.timerRunning = false;
   renderActiveCooks();
   checkAllTimers();
+}
+
+function resumeCook(id) {
+  const cook = cooks.find(c => c.id === id);
+  if (!cook || !cook.endTime) return;
+  
+  // Calculate how long it was cooking before it was stopped
+  const elapsedMs = cook.endTime - cook.startTime;
+  
+  // Reset the start time to now minus the elapsed time
+  // This maintains the elapsed cooking time
+  cook.startTime = Date.now() - elapsedMs;
+  cook.endTime = null;
+  cook.duration = null;
+  cook.timerRunning = true;
+  
+  renderActiveCooks();
+  startGlobalTimer();
+  showToast(`🔥 Resumed cooking: ${cook.food}`);
 }
 
 // ============================================================
@@ -295,6 +315,20 @@ async function saveCook(id) {
   }
 
   removeCook(id);
+}
+
+function confirmCancelCook(id) {
+  const cook = cooks.find(c => c.id === id);
+  if (!cook) return;
+  
+  const message = cook.startTime 
+    ? `确定要取消 "${cook.food}" 吗？\n\nAre you sure you want to cancel "${cook.food}"?`
+    : `确定要删除 "${cook.food}" 吗？\n\nAre you sure you want to remove "${cook.food}"?`;
+  
+  if (confirm(message)) {
+    removeCook(id);
+    showToast(`✓ Removed ${cook.food}`);
+  }
 }
 
 function removeCook(id) {
